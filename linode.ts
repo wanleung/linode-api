@@ -29,6 +29,7 @@ export async function createAccessKey(label: string): Promise<any> {
             {
               bucket_name: LINODE_BUKET_NAME,
               permissions: LINODE_PERMISSION,
+              region: LINODE_REGION,
             },
           ],
       },
