@@ -13,6 +13,8 @@ program
       console.log('Access key created and saved:', accessKey);
     } catch (error) {
       console.error('Error:', error);
+    } finally {
+      client.end();
     }
   });
 
@@ -25,6 +27,8 @@ program
       console.log('Access key removed:', keyId);
     } catch (error) {
       console.error('Error:', error);
+    } finally {
+      client.end();
     }
   });
 
@@ -37,6 +41,8 @@ program
       console.log('Access key retrieved:', accessKey);
     } catch (error) {
       console.error('Error:', error);
+    } finally {
+      client.end();
     }
   });
 
@@ -49,6 +55,8 @@ program
       console.log('Access key removed by label:', label);
     } catch (error) {
       console.error('Error:', error);
+    } finally {
+      client.end();
     }
   });
 
@@ -61,6 +69,8 @@ program
       console.log('Access keys:', accessKeys);
     } catch (error) {
       console.error('Error:', error);
+    } finally {
+      client.end();
     }
   });
 
