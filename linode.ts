@@ -21,7 +21,14 @@ export async function createAccessKey(label: string): Promise<any> {
   try {
     const response = await axios.post(
       `${LINODE_API_URL}/object-storage/keys`,
-      { label },
+      { label,
+        bucket_access: [
+            {
+              bucket_name: "my-bucket",
+              permissions: "read_write",
+            },
+          ],
+      },
       {
         headers: {
           Authorization: `Bearer ${LINODE_API_TOKEN}`,
