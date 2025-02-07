@@ -5,6 +5,7 @@ import { Client } from 'pg';
 const LINODE_API_URL = 'https://api.linode.com/v4';
 const LINODE_API_TOKEN = 'your_linode_api_token'; // Replace with your Linode API token
 const LINODE_BUKET_NAME = 'my-bucket';
+const LINODE_REGION = 'us-east-1';
 const LINODE_PERMISSION = 'read_write';
 
 // PostgreSQL client setup
