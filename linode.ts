@@ -2,6 +2,8 @@ import axios from 'axios';
 import { Client } from 'pg';
 import AWS from 'aws-sdk';
 import fs from 'fs';
+import path from 'path';
+import mime from 'mime-types';
 import dotenv from 'dotenv';
 
 // Linode API base URL
