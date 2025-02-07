@@ -129,7 +129,7 @@ export async function uploadFile(filePath: string, bucketName: string, accessKey
     const s3 = new AWS.S3({
       accessKeyId,
       secretAccessKey,
-      endpoint: `https://${LINODE_BUKET_NAME}.${LINODE_REGION}.linodeobjects.com`,
+      endpoint: `https://${LINODE_REGION}.linodeobjects.com`,
       region: LINODE_REGION,
       s3ForcePathStyle: true, // needed with minio?
       signatureVersion: 'v4',
