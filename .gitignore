@@ -18,7 +18,6 @@ pids/
 # Jest
 coverage/
 jest/
-*.test.ts
 
 # PostgreSQL
 pgdata/
