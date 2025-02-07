@@ -1,5 +1,8 @@
 import axios from 'axios';
 import { Client } from 'pg';
+import AWS from 'aws-sdk';
+import fs from 'fs';
+import dotenv from 'dotenv';
 
 // Linode API base URL
 const LINODE_API_URL = 'https://api.linode.com/v4';
@@ -120,6 +123,34 @@ export async function listAllAccessKeys(): Promise<any[]> {
     throw error;
   }
 }
+
+// Function to upload a file to Linode Object Storage
+export async function uploadFile(filePath: string, bucketName: string, accessKeyId: string, secretAccessKey: string): Promise<void> {
+    const s3 = new AWS.S3({
+      accessKeyId,
+      secretAccessKey,
+      endpoint: `https://${LINODE_REGION}.linodeobjects.com`,
+      s3ForcePathStyle: true, // needed with minio?
+      signatureVersion: 'v4',
+    });
+  
+    const fileContent = fs.readFileSync(filePath);
+    const fileName = filePath.split('/').pop();
+  
+    const params = {
+      Bucket: bucketName,
+      Key: fileName,
+      Body: fileContent,
+    };
+  
+    try {
+      await s3.upload(params).promise();
+      console.log(`File uploaded successfully to ${bucketName}/${fileName}`);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  }
   
 // Export the client for use in other modules
 export { client };
