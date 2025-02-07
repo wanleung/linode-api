@@ -4,6 +4,8 @@ import { Client } from 'pg';
 // Linode API base URL
 const LINODE_API_URL = 'https://api.linode.com/v4';
 const LINODE_API_TOKEN = 'your_linode_api_token'; // Replace with your Linode API token
+const LINODE_BUKET_NAME = 'my-bucket';
+const LINODE_PERMISSION = 'read_write';
 
 // PostgreSQL client setup
 const client = new Client({
@@ -24,8 +26,8 @@ export async function createAccessKey(label: string): Promise<any> {
       { label,
         bucket_access: [
             {
-              bucket_name: "my-bucket",
-              permissions: "read_write",
+              bucket_name: LINODE_BUKET_NAME,
+              permissions: LINODE_PERMISSION,
             },
           ],
       },
