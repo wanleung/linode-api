@@ -156,7 +156,54 @@ export async function uploadFile(filePath: string, bucketName: string, accessKey
       throw error;
     }
   }
+
+  export async function createWebsite(bucketName: string, accessKeyId: string, secretAccessKey: string): Promise<void> {
+    const s3 = new AWS.S3({
+      accessKeyId,
+      secretAccessKey,
+      endpoint: `https://${LINODE_REGION}.linodeobjects.com`,
+      s3ForcePathStyle: true,
+      signatureVersion: 'v4',
+    });
   
+    const websiteParams = {
+      Bucket: bucketName,
+      WebsiteConfiguration: {
+        IndexDocument: {
+          Suffix: 'index.html',
+        },
+        ErrorDocument: {
+          Key: 'error.html',
+        },
+      },
+    };
+  
+    const bucketPolicy = {
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Sid: 'PublicReadGetObject',
+          Effect: 'Allow',
+          Principal: '*',
+          Action: 's3:GetObject',
+          Resource: `arn:aws:s3:::${bucketName}/*`,
+        },
+      ],
+    };
+  
+    try {
+      await s3.putBucketWebsite(websiteParams).promise();
+      await s3.putBucketPolicy({
+        Bucket: bucketName,
+        Policy: JSON.stringify(bucketPolicy),
+      }).promise();
+      console.log(`Website configuration applied to bucket ${bucketName}`);
+    } catch (error) {
+      console.error('Error creating website configuration:', error);
+      throw error;
+    }
+  }
+
 // Export the client for use in other modules
 export { client };
 

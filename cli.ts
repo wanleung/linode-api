@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { createAccessKey, saveAccessKey, removeAccessKey, getAccessKeyByLabel, removeAccessKeyByLabel, listAllAccessKeys, uploadFile, client } from './linode';
+import { createAccessKey, saveAccessKey, removeAccessKey, getAccessKeyByLabel, removeAccessKeyByLabel, listAllAccessKeys, uploadFile, createWebsite, client } from './linode';
 
 const program = new Command();
 
@@ -81,6 +81,21 @@ program
     try {
       const accessKey = await getAccessKeyByLabel(label);
       await uploadFile(filePath, bucketName, accessKey.access_key, accessKey.secret_key);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      await client.end();
+    }
+  });
+
+program
+  .command('create-website <bucketName> <label>')
+  .description('Create a website configuration for a bucket')
+  .action(async (bucketName, label) => {
+    try {
+      const accessKey = await getAccessKeyByLabel(label);
+      await createWebsite(bucketName, accessKey.access_key, accessKey.secret_key);
+      console.log(`Website configuration applied to bucket ${bucketName}`);
     } catch (error) {
       console.error('Error:', error);
     } finally {
