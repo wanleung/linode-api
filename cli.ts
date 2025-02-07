@@ -1,19 +1,7 @@
 import { Command } from 'commander';
-import { createAccessKey, saveAccessKey, removeAccessKey, getAccessKeyByLabel, removeAccessKeyByLabel, listAllAccessKeys } from './linode';
-import { Client } from 'pg';
+import { createAccessKey, saveAccessKey, removeAccessKey, getAccessKeyByLabel, removeAccessKeyByLabel, listAllAccessKeys, client } from './linode';
 
 const program = new Command();
-
-// PostgreSQL client setup
-const client = new Client({
-  user: process.env.PG_USER,
-  host: process.env.PG_HOST,
-  database: process.env.PG_DATABASE,
-  password: process.env.PG_PASSWORD,
-  port: parseInt(process.env.PG_PORT, 10), // Default PostgreSQL port
-});
-
-client.connect();
 
 program
   .command('create <label>')
@@ -25,8 +13,6 @@ program
       console.log('Access key created and saved:', accessKey);
     } catch (error) {
       console.error('Error:', error);
-    } finally {
-      client.end();
     }
   });
 
@@ -39,8 +25,6 @@ program
       console.log('Access key removed:', keyId);
     } catch (error) {
       console.error('Error:', error);
-    } finally {
-      client.end();
     }
   });
 
@@ -53,8 +37,6 @@ program
       console.log('Access key retrieved:', accessKey);
     } catch (error) {
       console.error('Error:', error);
-    } finally {
-      client.end();
     }
   });
 
@@ -67,8 +49,6 @@ program
       console.log('Access key removed by label:', label);
     } catch (error) {
       console.error('Error:', error);
-    } finally {
-      client.end();
     }
   });
 
@@ -81,9 +61,12 @@ program
       console.log('Access keys:', accessKeys);
     } catch (error) {
       console.error('Error:', error);
-    } finally {
-      client.end();
     }
   });
 
 program.parse(process.argv);
+
+// Ensure the PostgreSQL client connection is closed when the process exits
+process.on('exit', () => {
+  client.end();
+});
