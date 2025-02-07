@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { createAccessKey, saveAccessKey, removeAccessKey, getAccessKeyByLabel, removeAccessKeyByLabel, listAllAccessKeys, client } from './linode';
+import { createAccessKey, saveAccessKey, removeAccessKey, getAccessKeyByLabel, removeAccessKeyByLabel, listAllAccessKeys, uploadFile, client } from './linode';
 
 const program = new Command();
 
@@ -71,6 +71,20 @@ program
       console.error('Error:', error);
     } finally {
       client.end();
+    }
+  });
+
+program
+  .command('upload <filePath> <bucketName> <label>')
+  .description('Upload a file to Linode Object Storage')
+  .action(async (filePath, bucketName, label) => {
+    try {
+      const accessKey = await getAccessKeyByLabel(label);
+      await uploadFile(filePath, bucketName, accessKey.access_key, accessKey.secret_key);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      await client.end();
     }
   });
 
