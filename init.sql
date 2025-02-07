@@ -1,0 +1,7 @@
+CREATE TABLE access_keys (
+  id SERIAL PRIMARY KEY,
+  label VARCHAR(255) NOT NULL,
+  access_key VARCHAR(255) NOT NULL,
+  secret_key VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
