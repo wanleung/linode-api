@@ -125,7 +125,7 @@ export async function listAllAccessKeys(): Promise<any[]> {
 }
 
 // Function to upload a file to Linode Object Storage
-export async function uploadFile(filePath: string, bucketName: string, accessKeyId: string, secretAccessKey: string): Promise<void> {
+export async function uploadFile(filePath: string, bucketName: string, accessKeyId: string, secretAccessKey: string): Promise<string> {
     const s3 = new AWS.S3({
       accessKeyId,
       secretAccessKey,
@@ -136,21 +136,28 @@ export async function uploadFile(filePath: string, bucketName: string, accessKey
     });
   
     const fileContent = fs.readFileSync(filePath);
-    const fileName = filePath.split('/').pop();
-  
-    if (!fileName) {
-      throw new Error('Invalid file path');
-    }
+    const fileName = path.basename(filePath);
+    const contentType = mime.lookup(filePath) || 'application/octet-stream';
   
     const params = {
       Bucket: bucketName,
       Key: fileName,
       Body: fileContent,
+      ContentType: contentType,
     };
   
     try {
       await s3.upload(params).promise();
       console.log(`File uploaded successfully to ${bucketName}/${fileName}`);
+  
+      // Generate a pre-signed URL for direct HTTP access
+      const url = s3.getSignedUrl('getObject', {
+        Bucket: bucketName,
+        Key: fileName,
+        Expires: 60 * 60, // URL expires in 1 hour
+      });
+  
+      return url;
     } catch (error) {
       console.error('Error uploading file:', error);
       throw error;
