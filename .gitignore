@@ -1,0 +1,34 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Jest
+coverage/
+jest/
+*.test.ts
+
+# PostgreSQL
+pgdata/
+
+# Build output
+dist/
+build/
+
+# Environment variables
+.env
+
+# VS Code
+.vscode/
