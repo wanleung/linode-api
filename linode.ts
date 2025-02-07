@@ -82,17 +82,34 @@ export async function getAccessKeyByLabel(label: string): Promise<any> {
   }
 }
 
-// Example usage
-(async () => {
+// Function to remove an access key by label
+export async function removeAccessKeyByLabel(label: string): Promise<void> {
   try {
-    const accessKey = await createAccessKey('my-access-key');
-    await saveAccessKey(accessKey);
-    // To remove the access key, uncomment the following line
-    // await removeAccessKey(accessKey.id);
+    const accessKey = await getAccessKeyByLabel(label);
+    await removeAccessKey(accessKey.id);
+    const query = 'DELETE FROM access_keys WHERE label = $1';
+    const values = [label];
+    await client.query(query, values);
+    console.log('Access key removed from database and Object Storage');
   } catch (error) {
-    console.error('Error:', error);
-  } finally {
-    client.end();
+    console.error('Error removing access key by label:', error);
+    throw error;
   }
-})();
+}
+  
+// Function to list all access keys
+export async function listAllAccessKeys(): Promise<any[]> {
+  const query = 'SELECT * FROM access_keys';
+  
+  try {
+    const res = await client.query(query);
+    return res.rows;
+  } catch (error) {
+    console.error('Error listing all access keys:', error);
+    throw error;
+  }
+}
+  
+// Export the client for use in other modules
+export { client };
 

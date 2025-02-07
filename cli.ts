@@ -1,16 +1,16 @@
 import { Command } from 'commander';
-import { createAccessKey, saveAccessKey, removeAccessKey, getAccessKeyByLabel} from './linode';
+import { createAccessKey, saveAccessKey, removeAccessKey, getAccessKeyByLabel, removeAccessKeyByLabel, listAllAccessKeys } from './linode';
 import { Client } from 'pg';
 
 const program = new Command();
 
 // PostgreSQL client setup
 const client = new Client({
-  user: 'your_pg_user',
-  host: 'your_pg_host',
-  database: 'your_pg_database',
-  password: 'your_pg_password',
-  port: 5432, // Default PostgreSQL port
+  user: process.env.PG_USER,
+  host: process.env.PG_HOST,
+  database: process.env.PG_DATABASE,
+  password: process.env.PG_PASSWORD,
+  port: parseInt(process.env.PG_PORT, 10), // Default PostgreSQL port
 });
 
 client.connect();
@@ -48,14 +48,42 @@ program
   .command('get <label>')
   .description('Get an access key by label')
   .action(async (label) => {
-  try {
-    const accessKey = await getAccessKeyByLabel(label);
-    console.log('Access key retrieved:', accessKey);
-  } catch (error) {
-    console.error('Error:', error);
-  } finally {
-    client.end();
-  }
-});
+    try {
+      const accessKey = await getAccessKeyByLabel(label);
+      console.log('Access key retrieved:', accessKey);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      client.end();
+    }
+  });
+
+program
+  .command('remove-by-label <label>')
+  .description('Remove an access key by label')
+  .action(async (label) => {
+    try {
+      await removeAccessKeyByLabel(label);
+      console.log('Access key removed by label:', label);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      client.end();
+    }
+  });
+
+program
+  .command('list')
+  .description('List all access keys')
+  .action(async () => {
+    try {
+      const accessKeys = await listAllAccessKeys();
+      console.log('Access keys:', accessKeys);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      client.end();
+    }
+  });
 
 program.parse(process.argv);
