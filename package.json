@@ -6,12 +6,15 @@
   "scripts": {
     "start": "ts-node cli.ts",
     "test": "jest",
-    "build": "tsc"
+    "build": "tsc",
+    "cli": "ts-node cli.ts"
   },
   "dependencies": {
     "axios": "^0.21.1",
     "commander": "^7.2.0",
-    "pg": "^8.6.0"
+    "pg": "^8.6.0",
+    "aws-sdk": "^2.814.0",
+    "dotenv": "^8.2.0"
   },
   "devDependencies": {
     "@types/jest": "^26.0.23",

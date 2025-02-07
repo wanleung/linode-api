@@ -137,6 +137,10 @@ export async function uploadFile(filePath: string, bucketName: string, accessKey
     const fileContent = fs.readFileSync(filePath);
     const fileName = filePath.split('/').pop();
   
+    if (!fileName) {
+      throw new Error('Invalid file path');
+    }
+  
     const params = {
       Bucket: bucketName,
       Key: fileName,
