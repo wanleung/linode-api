@@ -128,43 +128,45 @@ export async function listAllAccessKeys(): Promise<any[]> {
 
 // Function to upload a file to Linode Object Storage
 export async function uploadFile(filePath: string, bucketName: string, accessKeyId: string, secretAccessKey: string): Promise<string> {
-    const s3 = new AWS.S3({
-      accessKeyId,
-      secretAccessKey,
-      endpoint: `https://${LINODE_REGION}.linodeobjects.com`,
-      region: LINODE_REGION,
-      s3ForcePathStyle: true, // needed with minio?
-      signatureVersion: 'v4',
-    });
-  
-    const fileContent = fs.readFileSync(filePath);
-    const fileName = path.basename(filePath);
-    const contentType = mime.lookup(filePath) || 'application/octet-stream';
-  
-    const params = {
+  const s3 = new AWS.S3({
+    accessKeyId,
+    secretAccessKey,
+    endpoint: `https://${LINODE_REGION}.linodeobjects.com`,
+    region: LINODE_REGION,
+    s3ForcePathStyle: true, // needed with minio?
+    signatureVersion: 'v4',
+  });
+
+  const fileContent = fs.readFileSync(filePath);
+  const fileName = path.basename(filePath);
+  const contentType = mime.lookup(filePath) || 'application/octet-stream';
+  const cacheControlHeader = 'max-age=31536000'; // 1 year in seconds
+
+  const params = {
+    Bucket: bucketName,
+    Key: fileName,
+    Body: fileContent,
+    ContentType: contentType,
+    CacheControl: cacheControlHeader,
+  };
+
+  try {
+    await s3.upload(params).promise();
+    console.log(`File uploaded successfully to ${bucketName}/${fileName}`);
+
+    // Generate a pre-signed URL for direct HTTP access
+    const url = s3.getSignedUrl('getObject', {
       Bucket: bucketName,
       Key: fileName,
-      Body: fileContent,
-      ContentType: contentType,
-    };
-  
-    try {
-      await s3.upload(params).promise();
-      console.log(`File uploaded successfully to ${bucketName}/${fileName}`);
-  
-      // Generate a pre-signed URL for direct HTTP access
-      const url = s3.getSignedUrl('getObject', {
-        Bucket: bucketName,
-        Key: fileName,
-        Expires: 60 * 60, // URL expires in 1 hour
-      });
-  
-      return url;
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      throw error;
-    }
+      Expires: 60 * 60, // URL expires in 1 hour
+    });
+
+    return url;
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    throw error;
   }
+}
 
   export async function createWebsite(bucketName: string, accessKeyId: string, secretAccessKey: string): Promise<void> {
     const s3 = new AWS.S3({
