@@ -212,13 +212,15 @@ export async function uploadFile(filePath: string, bucketName: string, accessKey
       const cacheControlHeader = 'max-age=31536000'; // 1 year in seconds
   
       for (const object of objects.Contents || []) {
-        await s3.copyObject({
-          Bucket: bucketName,
-          CopySource: `${bucketName}/${object.Key}`,
-          Key: object.Key,
-          MetadataDirective: 'REPLACE',
-          CacheControl: cacheControlHeader,
-        }).promise();
+        if (object.Key) {
+          await s3.copyObject({
+            Bucket: bucketName,
+            CopySource: `${bucketName}/${object.Key}`,
+            Key: object.Key,
+            MetadataDirective: 'REPLACE',
+            CacheControl: cacheControlHeader,
+          }).promise();
+        }
       }
   
       console.log(`Website configuration applied to bucket ${bucketName}`);
