@@ -206,6 +206,21 @@ export async function uploadFile(filePath: string, bucketName: string, accessKey
         Bucket: bucketName,
         Policy: JSON.stringify(bucketPolicy),
       }).promise();
+  
+      // Add Cache-Control header for 1 year
+      const objects = await s3.listObjectsV2({ Bucket: bucketName }).promise();
+      const cacheControlHeader = 'max-age=31536000'; // 1 year in seconds
+  
+      for (const object of objects.Contents || []) {
+        await s3.copyObject({
+          Bucket: bucketName,
+          CopySource: `${bucketName}/${object.Key}`,
+          Key: object.Key,
+          MetadataDirective: 'REPLACE',
+          CacheControl: cacheControlHeader,
+        }).promise();
+      }
+  
       console.log(`Website configuration applied to bucket ${bucketName}`);
     } catch (error) {
       console.error('Error creating website configuration:', error);
