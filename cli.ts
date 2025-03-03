@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { createAccessKey, saveAccessKey, removeAccessKey, getAccessKeyByLabel, removeAccessKeyByLabel, listAllAccessKeys, uploadFile, createWebsite, client } from './linode';
+import { createAccessKey, saveAccessKey, removeAccessKey, getAccessKeyByLabel, removeAccessKeyByLabel, listAllAccessKeys, uploadFile, createWebsite, deleteFile, deleteAllFiles, client } from './linode';
 
 const program = new Command();
 
@@ -76,7 +76,7 @@ program
 
 program
   .command('upload <filePath> <bucketName> <label>')
-  .description('Upload a file to Linode Object Storage')
+  .description('Upload a file or directory to Linode Object Storage')
   .action(async (filePath, bucketName, label) => {
     try {
       const accessKey = await getAccessKeyByLabel(label);
@@ -96,6 +96,36 @@ program
       const accessKey = await getAccessKeyByLabel(label);
       await createWebsite(bucketName, accessKey.access_key, accessKey.secret_key);
       console.log(`Website configuration applied to bucket ${bucketName}`);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      await client.end();
+    }
+  });
+
+program
+  .command('deletefile <filePath> <bucketName> <label>')
+  .description('Delete a file from Linode Object Storage')
+  .action(async (filePath, bucketName, label) => {
+    try {
+      const accessKey = await getAccessKeyByLabel(label);
+      await deleteFile(filePath, bucketName, accessKey.access_key, accessKey.secret_key);
+      console.log(`File ${filePath} deleted from bucket ${bucketName}`);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      await client.end();
+    }
+  });
+
+program
+  .command('deleteall <bucketName> <label>')
+  .description('Delete all files from a bucket in Linode Object Storage')
+  .action(async (bucketName, label) => {
+    try {
+      const accessKey = await getAccessKeyByLabel(label);
+      await deleteAllFiles(bucketName, accessKey.access_key, accessKey.secret_key);
+      console.log(`All files deleted from bucket ${bucketName}`);
     } catch (error) {
       console.error('Error:', error);
     } finally {

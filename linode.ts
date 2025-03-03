@@ -2,6 +2,8 @@ import axios from 'axios';
 import { Client } from 'pg';
 import AWS from 'aws-sdk';
 import fs from 'fs';
+import { readdirSync, statSync, readFileSync } from 'fs';
+import { join, relative } from 'path';
 import path from 'path';
 import mime from 'mime-types';
 import dotenv from 'dotenv';
@@ -127,7 +129,7 @@ export async function listAllAccessKeys(): Promise<any[]> {
 }
 
 // Function to upload a file to Linode Object Storage
-export async function uploadFile(filePath: string, bucketName: string, accessKeyId: string, secretAccessKey: string): Promise<string> {
+export async function uploadFile(filePath: string, bucketName: string, accessKeyId: string, secretAccessKey: string): Promise<void> {
   const s3 = new AWS.S3({
     accessKeyId,
     secretAccessKey,
@@ -137,34 +139,55 @@ export async function uploadFile(filePath: string, bucketName: string, accessKey
     signatureVersion: 'v4',
   });
 
-  const fileContent = fs.readFileSync(filePath);
-  const fileName = path.basename(filePath);
-  const contentType = mime.lookup(filePath) || 'application/octet-stream';
-  const cacheControlHeader = 'max-age=31536000'; // 1 year in seconds
+  async function uploadSingleFile(file: string) {
+    const fileContent = readFileSync(file);
+    const contentType = mime.lookup(file) || 'application/octet-stream';
+    const key = file;
 
-  const params = {
-    Bucket: bucketName,
-    Key: fileName,
-    Body: fileContent,
-    ContentType: contentType,
-    CacheControl: cacheControlHeader,
-  };
-
-  try {
-    await s3.upload(params).promise();
-    console.log(`File uploaded successfully to ${bucketName}/${fileName}`);
-
-    // Generate a pre-signed URL for direct HTTP access
-    const url = s3.getSignedUrl('getObject', {
+    const params = {
       Bucket: bucketName,
-      Key: fileName,
-      Expires: 60 * 60, // URL expires in 1 hour
-    });
+      Key: key,
+      Body: fileContent,
+      ContentType: contentType,
+    };
 
-    return url;
-  } catch (error) {
-    console.error('Error uploading file:', error);
-    throw error;
+    try {
+      await s3.upload(params).promise();
+      console.log(`File uploaded successfully to ${bucketName}/${key}`);
+    } catch (error) {
+      console.error(`Error uploading file ${file}:`, error);
+      throw error;
+    }
+  }
+
+  async function uploadDirectory(directory: string) {
+    const items = readdirSync(directory);
+
+    for (const item of items) {
+      const fullPath = join(directory, item);
+      const stats = statSync(fullPath);
+
+      if (stats.isDirectory()) {
+        // Create a folder in the bucket
+        const folderKey = fullPath;
+        //await s3.putObject({
+        //  Bucket: bucketName,
+        //  Key: folderKey,
+        //}).promise();
+        //console.log(`Folder created successfully in ${bucketName}/${folderKey}`);
+
+        await uploadDirectory(fullPath);
+      } else {
+        await uploadSingleFile(fullPath);
+      }
+    }
+  }
+
+  const stats = statSync(filePath);
+  if (stats.isDirectory()) {
+    await uploadDirectory(filePath);
+  } else {
+    await uploadSingleFile(filePath);
   }
 }
 
@@ -211,7 +234,7 @@ export async function uploadFile(filePath: string, bucketName: string, accessKey
   
       // Add Cache-Control header for 1 year
       const objects = await s3.listObjectsV2({ Bucket: bucketName }).promise();
-      const cacheControlHeader = 'max-age=31536000'; // 1 year in seconds
+      //const cacheControlHeader = 'max-age=31536000'; // 1 year in seconds
   
       for (const object of objects.Contents || []) {
         if (object.Key) {
@@ -220,7 +243,7 @@ export async function uploadFile(filePath: string, bucketName: string, accessKey
             CopySource: `${bucketName}/${object.Key}`,
             Key: object.Key,
             MetadataDirective: 'REPLACE',
-            CacheControl: cacheControlHeader,
+      //      CacheControl: cacheControlHeader,
           }).promise();
         }
       }
@@ -231,6 +254,64 @@ export async function uploadFile(filePath: string, bucketName: string, accessKey
       throw error;
     }
   }
+
+export async function deleteFile(filePath: string, bucketName: string, accessKeyId: string, secretAccessKey: string): Promise<void> {
+  const s3 = new AWS.S3({
+    accessKeyId,
+    secretAccessKey,
+    endpoint: `https://${LINODE_REGION}.linodeobjects.com`,
+    region: LINODE_REGION,
+    s3ForcePathStyle: true,
+    signatureVersion: 'v4',
+  });
+
+  const fileName = path.basename(filePath);
+
+  const params = {
+    Bucket: bucketName,
+    Key: fileName,
+  };
+
+  try {
+    await s3.deleteObject(params).promise();
+    console.log(`File ${fileName} deleted from bucket ${bucketName}`);
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    throw error;
+  }
+}
+
+// Function to delete all files from a bucket in Linode Object Storage
+export async function deleteAllFiles(bucketName: string, accessKeyId: string, secretAccessKey: string): Promise<void> {
+  const s3 = new AWS.S3({
+    accessKeyId,
+    secretAccessKey,
+    endpoint: `https://${LINODE_REGION}.linodeobjects.com`,
+    region: LINODE_REGION,
+    s3ForcePathStyle: true,
+    signatureVersion: 'v4',
+  });
+
+  try {
+    const objects = await s3.listObjectsV2({ Bucket: bucketName }).promise();
+
+    for (const object of objects.Contents || []) {
+      //console.log(object);
+      if (object.Key) {
+        console.log(object.Key);
+        await s3.deleteObject({
+          Bucket: bucketName,
+          Key: object.Key,
+        }).promise();
+      }
+    }
+
+    console.log(`All files deleted from bucket ${bucketName}`);
+  } catch (error) {
+    console.error('Error deleting all files:', error);
+    throw error;
+  }
+}
 
 // Export the client for use in other modules
 export { client };
